@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Mã Dữ Liệu - Lucky Draw</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #000;
+            color: #0f0; /* Neon Green */
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+        }
+
+        /* --- SETUP PANEL (TERMINAL STYLE) --- */
+        #setup-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 15, 0, 0.9);
+            border: 2px solid #0f0;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2), inset 0 0 15px rgba(0, 255, 0, 0.1);
+            z-index: 10;
+            width: 450px;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Scanline effect cho setup panel */
+        #setup-panel::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 5;
+        }
+
+        label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        textarea, input[type="number"] {
+            width: 100%;
+            background: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            outline: none;
+        }
+
+        textarea:focus, input[type="number"]:focus {
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        textarea {
+            height: 120px;
+            resize: none;
+        }
+
+        .number-inputs {
+            display: none;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+            z-index: 5;
+        }
+
+        button:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        /* --- NÚT BACK (REBOOT) --- */
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: auto;
+            z-index: 10;
+            font-size: 14px;
+            padding: 8px 15px;
+            display: none;
+            border-color: #555;
+            color: #888;
+        }
+
+        #back-btn:hover {
+            border-color: #0f0;
+            color: #0f0;
+            background: transparent;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        /* --- CANVAS (MATRIX RAIN) --- */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            opacity: 0.6; /* Hơi tối lại để nổi bật text chính */
+        }
+
+        /* --- NÚT HACK (TRIGGER) --- */
+        #draw-btn {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            z-index: 5;
+            display: none;
+            background: #000;
+            border: 2px solid #f00;
+            color: #f00;
+            box-shadow: 0 0 10px #f00;
+        }
+
+        #draw-btn:hover {
+            background: #f00;
+            color: #fff;
+            box-shadow: 0 0 25px #f00;
+        }
+
+        /* --- TEXT KẾT QUẢ --- */
+        #result-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        #result-text {
+            font-size: 5rem;
+            color: transparent;
+            white-space: nowrap;
+            transition: all 0.1s;
+        }
+
+        /* Hiệu ứng khi đang "Hack" (Glitch Text) */
+        .drawing {
+            color: #fff !important;
+            text-shadow: 
+                3px 0px 0px rgba(255,0,0,0.8),
+                -3px 0px 0px rgba(0,255,255,0.8) !important;
+            filter: blur(1px);
+            opacity: 0.8;
+        }
+
+        /* Hiệu ứng khi công bố kết quả (Neon Lock) */
+        .reveal {
+            color: #0f0 !important;
+            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 40px #0f0 !important;
+            font-size: 6rem !important;
+            animation: lockTarget 0.5s ease-out forwards, blink 2s infinite alternate;
+        }
+
+        /* Text cảnh báo phụ */
+        #system-status {
+            font-size: 1.5rem;
+            color: #f00;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #f00;
+            opacity: 0;
+        }
+
+        @keyframes lockTarget {
+            0% { transform: scale(1.5); opacity: 0; }
+            50% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            95% { opacity: 1; }
+            96% { opacity: 0.2; }
+            97% { opacity: 1; }
+            98% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Dấu ngặc vuông [ ] khi hiển thị kết quả */
+        .bracket {
+            color: #f00;
+            text-shadow: 0 0 15px #f00;
+            display: inline-block;
+            margin: 0 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="back-btn" onclick="showSetup()">> SYSTEM.REBOOT()</button>
+
+    <div id="setup-panel">
+        <h2>> DECRYPT_SYSTEM_INIT</h2>
+        
+        <div class="radio-group">
+            <label><input type="radio" name="mode" value="name" checked onchange="toggleMode()"> [DATA_STRING]</label>
+            <label><input type="radio" name="mode" value="number" onchange="toggleMode()"> [DATA_INT]</label>
+        </div>
+
+        <div id="name-input" class="input-group">
+            <label style="display:block; margin-bottom: 5px;">> Nhập dữ liệu mục tiêu:</label>
+            <textarea id="participantsList">Người Chơi 1
+Người Chơi 2
+Người Chơi 3</textarea>
+        </div>
+
+        <div id="number-input" class="input-group number-inputs">
+            <div>
+                <label>> Từ:</label>
+                <input type="number" id="minNum" value="1">
+            </div>
+            <div>
+                <label>> Đến:</label>
+                <input type="number" id="maxNum" value="100">
+            </div>
+        </div>
+
+        <button onclick="saveSetup()">> EXECUTE_PROGRAM</button>
+    </div>
+
+    <button id="draw-btn" onclick="startDraw()">> INITIATE_HACK</button>
+    
+    <div id="result-wrapper">
+        <div id="system-status">SYS.ERROR // BREACH DETECTED</div>
+        <div id="result-text"></div>
+    </div>
+
+    <canvas id="canvas-container"></canvas>
+
+    <script>
+        let list = [];
+        let state = 'standby'; 
+        let drawInterval;
+        let drawTimeout;
+        let revealTimeout;
+
+        // --- CÀI ĐẶT ---
+        function toggleMode() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            document.getElementById('name-input').style.display = mode === 'name' ? 'block' : 'none';
+            document.getElementById('number-input').style.display = mode === 'number' ? 'flex' : 'none';
+        }
+
+        function saveSetup() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            if (mode === 'name') {
+                const text = document.getElementById('participantsList').value;
+                list = text.split('\n').map(item => item.trim()).filter(item => item !== "");
+            } else {
+                const min = parseInt(document.getElementById('minNum').value);
+                const max = parseInt(document.getElementById('maxNum').value);
+                if(min > max) {
+                    alert("Lỗi Logic: Min > Max");
+                    return;
+                }
+                list = [];
+                for (let i = min; i <= max; i++) {
+                    list.push(i.toString().padStart(max.toString().length, '0')); 
+                }
+            }
+
+            if (list.length === 0) {
+                alert("> ERROR: NO_DATA_FOUND");
+                return;
+            }
+
+            document.getElementById('setup-panel').style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById('setup-panel').style.display = 'none';
+                document.getElementById('draw-btn').style.display = 'block';
+                document.getElementById('back-btn').style.display = 'block';
+                document.getElementById('result-text').innerHTML = '';
+                document.getElementById('result-text').className = '';
+                document.getElementById('system-status').style.opacity = 0;
+                state = 'standby';
+            }, 300);
+        }
+
+        function showSetup() {
+            clearInterval(drawInterval);
+            clearTimeout(drawTimeout);
+            clearTimeout(revealTimeout);
+
+            document.getElementById('draw-btn').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'none';
+            document.getElementById('result-text').innerHTML = '';
+            document.getElementById('result-text').className = '';
+            document.getElementById('system-status').style.opacity = 0;
+            
+            state = 'standby';
+            matrixSpeed = 1; // Reset tốc độ mưa
+
+            const setupPanel = document.getElementById('setup-panel');
+            setupPanel.style.display = 'block';
+            setTimeout(() => {
+                setupPanel.style.opacity = 1;
+            }, 50);
+        }
+
+        // --- MATRIX RAIN EFFECT ---
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        
+        // Ký tự hiển thị (Katana + Số liệu)
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+
+        let fontSize = 16;
+        let columns;
+        let drops = [];
+        let matrixSpeed = 1; // 1 = bình thường, lớn hơn = chạy nhanh lúc hack
+
+        function resizeMatrix() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns = canvas.width / fontSize;
+            drops = [];
+            for(let x = 0; x < columns; x++) {
+                drops[x] = Math.random() * canvas.height;
+            }
+        }
+        window.addEventListener('resize', resizeMatrix);
+        resizeMatrix();
+
+        function drawMatrix() {
+            // Lớp phủ mờ dần (motion blur) - Speed càng nhanh đuôi càng dài
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.05 * matrixSpeed})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Đổi màu mưa: Bình thường = Xanh lá, Đang quay = Xanh lá/Đỏ nhiễu, Kết quả = Xanh đậm/Cyan
+            let charColor = '#0F0';
+            if(state === 'drawing') {
+                charColor = Math.random() > 0.9 ? '#f00' : '#0F0'; // Thi thoảng chớp đỏ
+            } else if (state === 'reveal') {
+                charColor = '#055'; // Tối lại khi hiện kết quả
+            }
+
+            ctx.fillStyle = charColor; 
+            ctx.font = fontSize + 'px "Share Tech Mono"';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                
+                // Vẽ ký tự
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                // Nếu ký tự rớt xuống cuối thì reset ngẫu nhiên
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975){
+                    drops[i] = 0;
+                }
+                
+                // Di chuyển xuống (ảnh hưởng bởi speed)
+                drops[i] += matrixSpeed;
+            }
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        // --- HÀNH ĐỘNG HACK (QUAY SỐ) ---
+        const resultText = document.getElementById('result-text');
+        const systemStatus = document.getElementById('system-status');
+
+        // Hàm tạo text rác giống mã hóa
+        function generateGlitchString(length) {
+            let result = '';
+            const characters = '!<>-_\\/[]{}—=+*^?#_0123456789';
+            for ( let i = 0; i < length; i++ ) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function startDraw() {
+            if (state === 'drawing') return;
+            
+            document.getElementById('draw-btn').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'none';
+            
+            state = 'drawing';
+            matrixSpeed = 3; // Mưa mã code rơi nhanh lên
+            
+            resultText.className = 'drawing';
+            systemStatus.style.opacity = 1; // Hiện chữ cảnh báo đỏ
+
+            // Lướt tên cực nhanh kèm nhiễu
+            let speed = 40; 
+            drawInterval = setInterval(() => {
+                const randomName = list[Math.floor(Math.random() * list.length)];
+                
+                // Trộn 1 ít ký tự lạ vào tên để tạo cảm giác đang giải mã
+                if(Math.random() > 0.7) {
+                    resultText.innerText = generateGlitchString(randomName.length);
+                } else {
+                    // Random vị trí offset của glitch (Text shadow đỏ/cyan)
+                    const glitchX1 = (Math.random() - 0.5) * 15;
+                    const glitchX2 = (Math.random() - 0.5) * 15;
+                    resultText.style.textShadow = `${glitchX1}px 0px 0px rgba(255,0,0,0.8), ${glitchX2}px 0px 0px rgba(0,255,255,0.8)`;
+                    resultText.innerText = randomName;
+                }
+
+                // Cảnh báo chớp giật
+                systemStatus.innerText = Math.random() > 0.5 ? "SYS.ERROR // BREACH DETECTED" : "DECRYPTING DATA...";
+            }, speed);
+
+            // Thời gian chờ để "Hack" xong là 4 giây
+            drawTimeout = setTimeout(stopDraw, 4000);
+        }
+
+        function stopDraw() {
+            clearInterval(drawInterval);
+            state = 'reveal';
+            matrixSpeed = 0.5; // Mưa chậm hẳn lại, tạo sự tập trung
+            
+            const winner = list[Math.floor(Math.random() * list.length)];
+            
+            // Xóa style nhiễu inline
+            resultText.style.textShadow = ''; 
+            
+            // Thêm ngoặc vuông màu đỏ để "Lock" mục tiêu
+            resultText.innerHTML = `<span class="bracket">[</span>${winner}<span class="bracket">]</span>`;
+            resultText.className = 'reveal';
+
+            systemStatus.style.color = "#0f0";
+            systemStatus.style.textShadow = "0 0 10px #0f0";
+            systemStatus.innerText = "TARGET LOCKED SUCCESSFULLY";
+
+            revealTimeout = setTimeout(() => {
+                const btn = document.getElementById('draw-btn');
+                btn.style.display = 'block';
+                btn.innerText = '> NEXT_TARGET';
+                document.getElementById('back-btn').style.display = 'block';
+                
+                // Reset trạng thái mưa nhưng vẫn giữ kết quả trên màn hình chờ bấm tiếp
+                matrixSpeed = 1; 
+                state = 'standby'; 
+                
+                // Reset cảnh báo về màu đỏ sẵn sàng cho lượt mới
+                systemStatus.style.color = "#f00";
+                systemStatus.style.textShadow = "0 0 10px #f00";
+                systemStatus.style.opacity = 0;
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
