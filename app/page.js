@@ -15,7 +15,7 @@ export default function HomePage() {
   const [systemStatus, setSystemStatus] = useState("SYS.ERROR // BREACH DETECTED");
   const [systemStatusVisible, setSystemStatusVisible] = useState(false);
   const [systemStatusLocked, setSystemStatusLocked] = useState(false);
-  const [drawButtonLabel, setDrawButtonLabel] = useState("> INITIATE_HACK");
+  const [drawButtonLabel, setDrawButtonLabel] = useState("> IVAN");
   const [customTextShadow, setCustomTextShadow] = useState("");
 
   const canvasRef = useRef(null);
@@ -141,7 +141,7 @@ export default function HomePage() {
     setResultClass("");
     setSystemStatusVisible(false);
     setSystemStatusLocked(false);
-    setDrawButtonLabel("> INITIATE_HACK");
+    setDrawButtonLabel("> IVAN");
     setCustomTextShadow("");
     setState("standby");
     matrixSpeedRef.current = 1;
