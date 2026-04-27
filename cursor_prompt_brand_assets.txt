@@ -1,0 +1,174 @@
+================================================================
+CURSOR PROMPT — LUCKY WHEEL: BRAND ASSETS CONFIG
+Phạm vi: CHỈ làm brand assets (logo, màu, ảnh nền, âm thanh, animation speed)
+KHÔNG đụng vào: prizes, segments, game logic, spin physics
+================================================================
+
+Step 0 — ĐỌC CODE TRƯỚC KHI LÀM BẤT CỨ THỨ GÌ
+
+Before writing a single line of code, do the following:
+1. List all files in the project (top-level + src/ or app/ folder)
+2. Find and READ the main wheel component (search for canvas, rotate, spin, wheel)
+3. Find and READ where colors, logo, background are currently set
+4. Find and READ where spin duration and sound are currently controlled
+5. Report back what you found — file names + line numbers for each asset type
+
+Only start coding AFTER you have confirmed where each of these currently lives:
+  - Logo / brand image
+  - Background image or color
+  - Primary / accent color
+  - Wheel border or outer ring color
+  - Spin duration (ms or seconds)
+  - Minimum rotations
+  - Sound file or sound toggle
+
+
+════════════════════════════════════════════════════════════════
+BƯỚC 1 — TẠO FILE brandConfig.ts
+════════════════════════════════════════════════════════════════
+
+After reading the codebase, create ONE new file.
+Place it at: src/config/brandConfig.ts
+(or lib/brandConfig.ts — match the project's existing folder convention)
+
+```typescript
+// brandConfig.ts
+// Single source of truth cho tất cả brand assets
+// Prizes và segments KHÔNG nằm ở đây — sẽ làm riêng sau
+
+export interface BrandAssets {
+  // Hình ảnh
+  logoUrl:          string   // logo hiện trên trang + giữa bánh xe
+  backgroundUrl:    string   // ảnh nền toàn trang game
+  wheelCenterUrl?:  string   // ảnh riêng cho trung tâm bánh xe
+                             // nếu không có → dùng logoUrl
+
+  // Màu sắc
+  primaryColor:     string   // màu chính: nút, highlight (hex, e.g. '#E63946')
+  wheelBorderColor: string   // màu viền ngoài bánh xe
+
+  // Animation
+  spinDurationMs:   number   // tổng thời gian quay tính bằng ms (e.g. 4000)
+  minRotations:     number   // số vòng tối thiểu trước khi dừng (e.g. 5)
+
+  // Âm thanh
+  soundEnabled:     boolean
+  tickSoundUrl?:    string   // tiếng tích khi quay (optional, dùng default nếu không có)
+  winSoundUrl?:     string   // tiếng khi thắng (optional)
+}
+
+// ── DEFAULT — thay bằng assets thật của brand ──
+export const brandConfig: BrandAssets = {
+  logoUrl:          '/assets/logo.png',
+  backgroundUrl:    '/assets/background.jpg',
+  wheelCenterUrl:   undefined,            // sẽ dùng logoUrl
+
+  primaryColor:     '#E63946',
+  wheelBorderColor: '#C1121F',
+
+  spinDurationMs:   4000,
+  minRotations:     5,
+
+  soundEnabled:     true,
+  tickSoundUrl:     undefined,            // dùng sound mặc định của game
+  winSoundUrl:      undefined,
+}
+```
+
+
+════════════════════════════════════════════════════════════════
+BƯỚC 2 — REFACTOR: THAY THẾ GIÁ TRỊ CỨNG BẰNG brandConfig
+════════════════════════════════════════════════════════════════
+
+Using what you found in Step 0, go to each file and replace
+hardcoded values with imports from brandConfig.
+
+RULES:
+- Import brandConfig at the top of each file that needs it
+- Replace ONLY the asset values — do not change any logic
+- If a value is already a variable/prop, trace it back to where
+  it's defined and replace it there (the source, not the usage)
+- Do NOT refactor component structure, just swap the values
+
+WHAT TO REPLACE:
+
+2a. Logo / brand image
+    Find: <img src="..." /> or background-image with a logo path
+    Replace src value with: brandConfig.logoUrl
+
+2b. Background
+    Find: background-image, backgroundImage, or bg CSS with an image path
+    Replace the path value with: brandConfig.backgroundUrl
+
+2c. Wheel center image
+    Find: the image or element rendered at the center of the wheel
+    Replace its src with: brandConfig.wheelCenterUrl ?? brandConfig.logoUrl
+
+2d. Primary color
+    Find: the color used for the spin button, highlight ring, or accent
+    Replace with: brandConfig.primaryColor
+
+2e. Wheel border color
+    Find: stroke, borderColor, or fill used for the outer ring of the wheel
+    Replace with: brandConfig.wheelBorderColor
+
+2f. Spin duration
+    Find: the number (ms or s) controlling total spin time
+    Replace with: brandConfig.spinDurationMs
+    Note: if the existing code uses seconds, convert: brandConfig.spinDurationMs / 1000
+
+2g. Minimum rotations
+    Find: the number controlling how many full rotations before stopping
+    Replace with: brandConfig.minRotations
+
+2h. Sound enabled toggle
+    Find: the boolean or condition that enables/disables sound
+    Replace with: brandConfig.soundEnabled
+
+2i. Sound file URLs (only if the game uses custom sound files)
+    If tickSoundUrl is used: replace with brandConfig.tickSoundUrl ?? existing_default
+    If winSoundUrl is used: replace with brandConfig.winSoundUrl ?? existing_default
+
+
+════════════════════════════════════════════════════════════════
+BƯỚC 3 — KIỂM TRA
+════════════════════════════════════════════════════════════════
+
+After making all replacements:
+
+1. Run: npx tsc --noEmit
+   Fix any TypeScript errors before continuing.
+
+2. Run: npm run dev
+   Open the game in browser and verify:
+   [ ] Game loads and renders correctly
+   [ ] Wheel spins with the SAME behavior as before
+   [ ] No visual regressions (wheel still looks correct)
+   [ ] Sound behavior unchanged
+
+3. Test the config works: temporarily change brandConfig.primaryColor
+   to '#0000FF' (blue), save, verify the button/accent turns blue,
+   then revert to the original color.
+
+4. Report: list every file you changed and what you changed in each.
+
+
+════════════════════════════════════════════════════════════════
+ĐIỀU TUYỆT ĐỐI KHÔNG LÀM
+════════════════════════════════════════════════════════════════
+
+- KHÔNG refactor wheel animation or spin physics
+- KHÔNG change component structure or props interface
+- KHÔNG add any new UI components
+- KHÔNG touch prizes, segments, or game result logic
+- KHÔNG add API calls or fetch logic (sẽ làm sau)
+- KHÔNG rename existing variables unless necessary to avoid collision
+
+If you find yourself doing any of the above, STOP and revert.
+
+================================================================
+RESET (nếu Cursor làm sai hoặc vượt scope)
+================================================================
+Stop. Revert all changes from the last step.
+Re-read "ĐIỀU TUYỆT ĐỐI KHÔNG LÀM" and try again.
+================================================================

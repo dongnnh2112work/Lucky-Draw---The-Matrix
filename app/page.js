@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { brandConfig } from "../lib/brandConfig";
 
 export default function HomePage() {
   const [mode, setMode] = useState("name");
@@ -15,7 +16,7 @@ export default function HomePage() {
   const [systemStatus, setSystemStatus] = useState("SYS.ERROR // BREACH DETECTED");
   const [systemStatusVisible, setSystemStatusVisible] = useState(false);
   const [systemStatusLocked, setSystemStatusLocked] = useState(false);
-  const [drawButtonLabel, setDrawButtonLabel] = useState("> INITIATE_HACK");
+  const [drawButtonLabel, setDrawButtonLabel] = useState("> INITIATE_HACKKKKK");
   const [customTextShadow, setCustomTextShadow] = useState("");
 
   const canvasRef = useRef(null);
@@ -65,7 +66,7 @@ export default function HomePage() {
 
       let charColor = "#0F0";
       if (stateRef.current === "drawing") {
-        charColor = Math.random() > 0.9 ? "#f00" : "#0F0";
+        charColor = Math.random() > 0.9 ? brandConfig.primaryColor : "#0F0";
       } else if (stateRef.current === "reveal") {
         charColor = "#055";
       }
@@ -141,7 +142,7 @@ export default function HomePage() {
     setResultClass("");
     setSystemStatusVisible(false);
     setSystemStatusLocked(false);
-    setDrawButtonLabel("> INITIATE_HACK");
+    setDrawButtonLabel("> INITIATE_HACKKKKK");
     setCustomTextShadow("");
     setState("standby");
     matrixSpeedRef.current = 1;
@@ -213,11 +214,19 @@ export default function HomePage() {
       setSystemStatus(Math.random() > 0.5 ? "SYS.ERROR // BREACH DETECTED" : "DECRYPTING DATA...");
     }, 40);
 
-    drawTimeoutRef.current = setTimeout(stopDraw, 4000);
+    drawTimeoutRef.current = setTimeout(stopDraw, brandConfig.spinDurationMs);
   };
 
   return (
-    <>
+    <div
+      style={{
+        backgroundImage: `url(${brandConfig.backgroundUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <img src={brandConfig.logoUrl} alt="brand" style={{ height: 60, display: "block", margin: "0 auto 16px" }} />
       {!showSetup && (
         <button id="back-btn" onClick={reboot}>
           {"> SYSTEM.REBOOT()"}
@@ -272,7 +281,7 @@ export default function HomePage() {
       )}
 
       {!showSetup && (
-        <button id="draw-btn" onClick={startDraw}>
+        <button id="draw-btn" onClick={startDraw} style={{ backgroundColor: brandConfig.primaryColor, color: "#ffffff" }}>
           {drawButtonLabel}
         </button>
       )}
@@ -296,6 +305,9 @@ export default function HomePage() {
       <canvas id="canvas-container" ref={canvasRef} />
 
       <style jsx global>{`
+        body {
+          background: #000 url("${brandConfig.backgroundUrl}") center / cover no-repeat fixed;
+        }
         #setup-panel {
           position: absolute;
           top: 50%;
@@ -422,14 +434,14 @@ export default function HomePage() {
           width: 250px;
           z-index: 5;
           background: #000;
-          border: 2px solid #f00;
-          color: #f00;
-          box-shadow: 0 0 10px #f00;
+          border: 2px solid ${brandConfig.primaryColor};
+          color: ${brandConfig.primaryColor};
+          box-shadow: 0 0 10px ${brandConfig.primaryColor};
         }
         #draw-btn:hover {
-          background: #f00;
+          background: ${brandConfig.primaryColor};
           color: #fff;
-          box-shadow: 0 0 25px #f00;
+          box-shadow: 0 0 25px ${brandConfig.primaryColor};
         }
         #result-wrapper {
           position: absolute;
@@ -461,10 +473,10 @@ export default function HomePage() {
         }
         #system-status {
           font-size: 1.5rem;
-          color: #f00;
+          color: ${brandConfig.primaryColor};
           margin-bottom: 20px;
           letter-spacing: 5px;
-          text-shadow: 0 0 10px #f00;
+          text-shadow: 0 0 10px ${brandConfig.primaryColor};
           opacity: 0;
         }
         #system-status.locked {
@@ -506,12 +518,12 @@ export default function HomePage() {
           }
         }
         .bracket {
-          color: #f00;
-          text-shadow: 0 0 15px #f00;
+          color: ${brandConfig.primaryColor};
+          text-shadow: 0 0 15px ${brandConfig.primaryColor};
           display: inline-block;
           margin: 0 20px;
         }
       `}</style>
-    </>
+    </div>
   );
 }
