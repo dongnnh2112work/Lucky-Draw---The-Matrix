@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { brandConfig } from "../lib/brandConfig";
+import { useBrandConfig } from "../hooks/useBrandConfig";
 
 export default function HomePage() {
+  const { config, isLoading } = useBrandConfig();
   const [mode, setMode] = useState("name");
   const [participantsText, setParticipantsText] = useState("Người Chơi 1\nNgười Chơi 2\nNgười Chơi 3");
   const [minNum, setMinNum] = useState(1);
@@ -66,7 +67,7 @@ export default function HomePage() {
 
       let charColor = "#0F0";
       if (stateRef.current === "drawing") {
-        charColor = Math.random() > 0.9 ? brandConfig.primaryColor : "#0F0";
+        charColor = Math.random() > 0.9 ? config.primaryColor : "#0F0";
       } else if (stateRef.current === "reveal") {
         charColor = "#055";
       }
@@ -214,19 +215,28 @@ export default function HomePage() {
       setSystemStatus(Math.random() > 0.5 ? "SYS.ERROR // BREACH DETECTED" : "DECRYPTING DATA...");
     }, 40);
 
-    drawTimeoutRef.current = setTimeout(stopDraw, brandConfig.spinDurationMs);
+    drawTimeoutRef.current = setTimeout(stopDraw, config.spinDurationMs);
   };
+
+  if (isLoading)
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <p>Đang tải...</p>
+      </div>
+    );
 
   return (
     <div
       style={{
-        backgroundImage: `url(${brandConfig.backgroundUrl})`,
+        backgroundImage: `url(${config.backgroundUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         minHeight: "100vh",
       }}
     >
-      <img src={brandConfig.logoUrl} alt="brand" style={{ height: 60, display: "block", margin: "0 auto 16px" }} />
+      {config.logoUrl && (
+        <img src={config.logoUrl} alt="brand" style={{ height: 60, display: "block", margin: "0 auto 16px" }} />
+      )}
       {!showSetup && (
         <button id="back-btn" onClick={reboot}>
           {"> SYSTEM.REBOOT()"}
@@ -234,7 +244,7 @@ export default function HomePage() {
       )}
 
       {showSetup && (
-        <div id="setup-panel">
+        <div id="setup-panel" style={{ borderColor: config.primaryColor }}>
           <h2>{"> DECRYPT_SYSTEM_INIT"}</h2>
 
           <div className="radio-group">
@@ -276,12 +286,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          <button onClick={saveSetup}>{"> EXECUTE_PROGRAM"}</button>
+          <button
+            onClick={saveSetup}
+            style={{ backgroundColor: config.primaryColor, borderColor: config.primaryColor, color: "#ffffff" }}
+          >
+            {"> EXECUTE_PROGRAM"}
+          </button>
         </div>
       )}
 
       {!showSetup && (
-        <button id="draw-btn" onClick={startDraw} style={{ backgroundColor: brandConfig.primaryColor, color: "#ffffff" }}>
+        <button id="draw-btn" onClick={startDraw} style={{ backgroundColor: config.primaryColor, color: "#ffffff" }}>
           {drawButtonLabel}
         </button>
       )}
@@ -306,7 +321,7 @@ export default function HomePage() {
 
       <style jsx global>{`
         body {
-          background: #000 url("${brandConfig.backgroundUrl}") center / cover no-repeat fixed;
+          background: #000 url("${config.backgroundUrl}") center / cover no-repeat fixed;
         }
         #setup-panel {
           position: absolute;
@@ -434,14 +449,14 @@ export default function HomePage() {
           width: 250px;
           z-index: 5;
           background: #000;
-          border: 2px solid ${brandConfig.primaryColor};
-          color: ${brandConfig.primaryColor};
-          box-shadow: 0 0 10px ${brandConfig.primaryColor};
+          border: 2px solid ${config.primaryColor};
+          color: ${config.primaryColor};
+          box-shadow: 0 0 10px ${config.primaryColor};
         }
         #draw-btn:hover {
-          background: ${brandConfig.primaryColor};
+          background: ${config.primaryColor};
           color: #fff;
-          box-shadow: 0 0 25px ${brandConfig.primaryColor};
+          box-shadow: 0 0 25px ${config.primaryColor};
         }
         #result-wrapper {
           position: absolute;
@@ -473,10 +488,10 @@ export default function HomePage() {
         }
         #system-status {
           font-size: 1.5rem;
-          color: ${brandConfig.primaryColor};
+          color: ${config.primaryColor};
           margin-bottom: 20px;
           letter-spacing: 5px;
-          text-shadow: 0 0 10px ${brandConfig.primaryColor};
+          text-shadow: 0 0 10px ${config.primaryColor};
           opacity: 0;
         }
         #system-status.locked {
@@ -518,8 +533,8 @@ export default function HomePage() {
           }
         }
         .bracket {
-          color: ${brandConfig.primaryColor};
-          text-shadow: 0 0 15px ${brandConfig.primaryColor};
+          color: ${config.primaryColor};
+          text-shadow: 0 0 15px ${config.primaryColor};
           display: inline-block;
           margin: 0 20px;
         }
